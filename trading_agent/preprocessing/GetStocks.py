@@ -13,7 +13,7 @@ import yfinance as yf
 # from pandas_datareader import data as pdr
 import pandas as pd
 import ssl
-# ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_stock_symbols():
   sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
