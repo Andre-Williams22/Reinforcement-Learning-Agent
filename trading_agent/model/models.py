@@ -24,6 +24,8 @@ from env.EnvMultipleStock_train import StockEnvTrain
 from env.EnvMultipleStock_validation import StockEnvValidation
 from env.EnvMultipleStock_trade import StockEnvTrade
 
+import ssl
+
 
 def train_A2C(env_train, model_name, timesteps=25000):
     """A2C model"""
