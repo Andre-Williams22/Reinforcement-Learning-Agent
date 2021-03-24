@@ -114,7 +114,7 @@ def makeTrades(df, model):
 
 if __name__ == "__main__":
     # tickers = get_highest_movers()
-    tickers = ['PLTR','CCIV','GME','NIO', 'DISCA', 'ENPH', 'PENN', 'VIAC', 'HFC', 'WAT', 'NVR', 'UAL', 'DISCK', 'CF', 'BWA', 'APA', 'MRO', 'FANG', 'TFX', 'OXY', 'ROST', 'CCL', 'ALK', 'LUMN']
+    tickers = ['DISCA', 'ENPH', 'PENN', 'VIAC', 'HFC', 'WAT', 'NVR', 'UAL', 'DISCK', 'CF', 'BWA', 'APA', 'MRO', 'FANG', 'TFX', 'OXY', 'ROST', 'CCL', 'ALK', 'LUMN']
     print(tickers)
 
     model = load_model(tickers)
