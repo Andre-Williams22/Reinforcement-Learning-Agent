@@ -138,9 +138,3 @@ if __name__ == "__main__":
     print(data)
 
     makeTrades(data, model)
-
-    1,000,043.38
-
-    #3,803,810.34 Buying Power
-
-    #3,803,810.34
