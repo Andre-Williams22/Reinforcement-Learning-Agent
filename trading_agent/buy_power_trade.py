@@ -32,20 +32,51 @@ def load_model(tickers):
 
     return model
 
-def buy_stock():
-    pass 
+def buy_stock(ticker, num_of_shares):
+    '''Buys stock if we have the funds '''
 
+    cash_in_hand = float(account.buying_power)
+ 
+    # grab current price of stock
+    current_price = api.get_barset(ticker, 'day', limit=1)
+    price = current_price[ticker]
+    cprice = price[-1].c
+    cost = round((num_of_shares*cprice)-0.5)
+    
+    # determine if we can afford stock 
+    if cash_in_hand > cost:
+        shares = round((int(num_of_shares)))
+        
+        
+        try: 
+            # alpaca api request buy order
+            api.submit_order(symbol=ticker, qty=shares, side='buy', type='market', time_in_force='day')
+            # print('cash', float(account.buying_power))
+            # print('cost', cost)
+        except:
+            return "Need more cash, can't buy anything"
+            
 
 def sell_stock(ticker, num_of_shares):
     ''' sells stock in the market using shares we have and shares we don't have via shorting '''
     
-    positions = api.list_position()
-    # submit alpaca request
-    api.submit_order(symbol=ticker,qty=abs(int(num_of_shares)),side='sell',type='market',time_in_force='day')
-    
-
-    
-
+    positions = api.list_positions()
+    if num_of_shares > 0:# can't short sell stocks
+        print(ticker, round(int(num_of_shares)))
+    # submit alpaca request buy order   could be shorting which is betting on market going down
+        
+        for position in positions:
+            if position.symbol == ticker and abs(int(num_of_shares)) <= int(position.qty):
+        ## regular sell order 
+                api.submit_order(symbol=ticker,qty=round(int(num_of_shares)),side='sell',type='market',time_in_force='day')
+    else:
+        try: 
+            print('shorting stock: ', num_of_shares)
+            #Short the stock 
+            api.submit_order(ticker,round(abs(int(num_of_shares))),'sell','market','day')
+        except:
+            pass 
+            
 
 def makeTrades(df, model):
     '''predicts on current state using pretrained model'''
@@ -79,16 +110,23 @@ def makeTrades(df, model):
     print('sell')
     for index in sell_index:
         #         stock ticker     num to sell for each ticker
-        # sell_stock(mappings[index],actions[index])
+        sell_stock(mappings[index],actions[index])
         
-        print(mappings[index], int(actions[index]))
     
     print('buy')
     for index in buy_index:
+        #daytrading_buying_power = 4 * (last_equity - last_maintenance_margin)
         
-        buy_stock(mappings[index, int(actions[index])])
+        buy_stock(mappings[index], int(actions[index]))
+        print('cash', float(account.daytrading_buying_power))
+        # print(4 * (float(account.last_equity) - float(account.last_maintenance_margin)))
+        current_price = api.get_barset(mappings[index], 'day', limit=1)
+        price = current_price[mappings[index]]
+        cprice = price[-1].c
+        cost = round((actions[index]*cprice)-0.5)
+        print('cost', cost)
         
-        print(mappings[index], actions[index])
+        # print(mappings[index], actions[index])
         
 
 def reset(df, initial=True, previous_state=[]):
@@ -144,12 +182,24 @@ def reset(df, initial=True, previous_state=[]):
 
 if __name__ == "__main__":
     # tickers = get_highest_movers()
-    tickers = ['AMCR', 'CCL', 'ETSY', 'OXY', 'NCLH', 'FLS', 'SIVB', 'V', 'FANG', 'DG', 'MCHP', 'ENPH', 'MRO', 'BBY', 'CB', 'APA', 'DISCK', 'XRX', 'NKE', 'DISCA']
+    tickers = ['TSLA', 'CCL', 'ETSY', 'OXY', 'NCLH', 'FLS', 'SIVB', 'V', 'FANG', 'DG', 'MCHP', 'ENPH', 'MRO', 'BBY', 'CB', 'APA', 'DISCK', 'XRX', 'NKE', 'DISCA']
+    # tickers = ['TSLA']
     print(tickers)
 
     model = load_model(tickers)
     
     print(model)
+    
+    
+    # isOpen = alpaca.get_clock().is_open
+    # while(not isOpen):
+    #     clock = alpaca.get_clock()
+    #     openingTime = clock.next_open.replace(tzinfo=datetime.timezone.utc).timestamp()
+    #     currTime = clock.timestamp.replace(tzinfo=datetime.timezone.utc).timestamp()
+    #     timeToOpen = int((openingTime - currTime) / 60)
+    #     print(str(timeToOpen) + " minutes til market open.")
+    #     time.sleep(60)
+    #     isOpen = self.alpaca.get_clock().is_open
 
     data = preprocess_data(tickers, limit=2)
     data = data[(data.datadate >= data.datadate.max())]
@@ -158,7 +208,19 @@ if __name__ == "__main__":
     data = data.fillna(method='ffill')
     # print(data)
 
-    makeTrades(data, model)
+    starttime = time.time()
+    timeout = starttime + 60*60*7
+    while time.time() <= timeout:
+        print("starting iteration at {}".format(time.strftime("%Y-%m-%d %H:%M:%S")))
+        data = preprocess_data(tickers, limit=2)
+        data = data[(data.datadate >= data.datadate.max())]
+        data = data.reset_index()
+        data = data.drop(["index"], axis=1)
+        data = data.fillna(method='ffill')
+        makeTrades(data, model)
+        time.sleep(60 - ((time.time() - starttime) % 60))
+         
+
 
 
     # print('buying power', account.buying_power)
