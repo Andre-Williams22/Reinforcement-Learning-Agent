@@ -32,6 +32,64 @@ def load_model(tickers):
 
     return model
 
+def buy_stock():
+    pass 
+
+
+def sell_stock(ticker, num_of_shares):
+    ''' sells stock in the market using shares we have and shares we don't have via shorting '''
+    
+    positions = api.list_position()
+    # submit alpaca request
+    api.submit_order(symbol=ticker,qty=abs(int(num_of_shares)),side='sell',type='market',time_in_force='day')
+    
+
+    
+
+
+def makeTrades(df, model):
+    '''predicts on current state using pretrained model'''
+    mappings = dict()
+    i = 0
+    # map data to index for model purposes
+    for index, row in df.iterrows():
+        mappings[i] = row['tic']
+        i += 1
+
+    print('mappings: ', mappings)
+    
+    # reload env to get current buying power (df, prices,ti, date) for model prediction 
+    obs_trade = reset(df)
+
+    actions, _states = model.predict(obs_trade)
+    # obs_trade, rewards, dones, info = step(actions, i, mappings, state, reward)
+
+    print('actions: ', actions)
+    
+    
+    actions = actions * HMAX_NORMALIZE
+
+    argsort_actions = np.argsort(actions)
+
+    sell_index = argsort_actions[:np.where(actions < 0)[0].shape[0]]
+    buy_index = argsort_actions[::-1][:np.where(actions > 0)[0].shape[0]]
+
+    positions = api.list_positions()
+    
+    print('sell')
+    for index in sell_index:
+        #         stock ticker     num to sell for each ticker
+        # sell_stock(mappings[index],actions[index])
+        
+        print(mappings[index], int(actions[index]))
+    
+    print('buy')
+    for index in buy_index:
+        
+        buy_stock(mappings[index, int(actions[index])])
+        
+        print(mappings[index], actions[index])
+        
 
 def reset(df, initial=True, previous_state=[]):
     '''According to A2c docs you need to reset trading env for predict on new data '''
@@ -93,14 +151,14 @@ if __name__ == "__main__":
     
     print(model)
 
-    # data = preprocess_data(tickers, limit=2)
-    # data = data[(data.datadate >= data.datadate.max())]
-    # data = data.reset_index()
-    # data = data.drop(["index"], axis=1)
-    # data = data.fillna(method='ffill')
+    data = preprocess_data(tickers, limit=2)
+    data = data[(data.datadate >= data.datadate.max())]
+    data = data.reset_index()
+    data = data.drop(["index"], axis=1)
+    data = data.fillna(method='ffill')
     # print(data)
 
-    # makeTrades(data, model)
+    makeTrades(data, model)
 
 
     # print('buying power', account.buying_power)
@@ -112,7 +170,6 @@ if __name__ == "__main__":
 
     # Check how much money we can use to open new positions.
     print('${} is available as buying power.'.format(account.buying_power))
-    print("\n")
     print('equity: ',account.equity)
     # balance_change = float(account.equity) - float(account.last_equity)
     # print(f'Today\'s portfolio balance change: ${balance_change}')
