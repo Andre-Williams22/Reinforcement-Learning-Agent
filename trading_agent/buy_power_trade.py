@@ -33,7 +33,7 @@ def load_model(tickers):
     return model
 
 def buy_stock(ticker, num_of_shares):
-    '''Buys stock if we have the funds '''
+    '''Buys stock if we have the funds available'''
 
     cash_in_hand = float(account.buying_power)
  
