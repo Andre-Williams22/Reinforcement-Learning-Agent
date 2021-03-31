@@ -182,8 +182,30 @@ def reset(df, initial=True, previous_state=[]):
 
 if __name__ == "__main__":
     # tickers = get_highest_movers()
-    tickers = ['TSLA', 'CCL', 'ETSY', 'OXY', 'NCLH', 'FLS', 'SIVB', 'V', 'FANG', 'DG', 'MCHP', 'ENPH', 'MRO', 'BBY', 'CB', 'APA', 'DISCK', 'XRX', 'NKE', 'DISCA']
+    #tickers = ['TSLA', 'CCL', 'ETSY', 'OXY', 'NCLH', 'FLS', 'SIVB', 'V', 'FANG', 'DG', 'MCHP', 'ENPH', 'MRO', 'BBY', 'CB', 'APA', 'DISCK', 'XRX', 'NKE', 'DISCA']
     # tickers = ['TSLA']
+    
+    tickers = ['PVH',
+ 'WBA',
+ 'VIAC',
+ 'DISCA',
+ 'KR',
+ 'ILMN',
+ 'EQIX',
+ 'DISCK',
+ 'RMD',
+ 'RL',
+ 'PENN',
+ 'ABMD',
+ 'ENPH',
+ 'LB',
+ 'ADSK',
+ 'KMB',
+ 'ZBRA',
+ 'IVZ',
+ 'BLK',
+ 'UA']
+    
     print(tickers)
 
     model = load_model(tickers)
