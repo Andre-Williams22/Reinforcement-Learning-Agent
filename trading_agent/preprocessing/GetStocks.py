@@ -7,14 +7,21 @@ import logging
 import pytz
 import time
 import csv
+
+# import os
+# os.environ["HTTP_PROXY"]="<yourproxy>"
 # input : year(date), num of stocks
 # output: list of volatile stocks
 
 import yfinance as yf
 # from pandas_datareader import data as pdr
 import pandas as pd
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+# import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context
+
+requests.get('https://finance.yahoo.com/', verify=False)
+
+# print(requests.get('https://www.yahoo.com'))
 
 def get_stock_symbols():
   sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
@@ -37,7 +44,7 @@ def get_movement_list(stocks, period):
   for stock in stocks:
     # get history
     curr_stock = yf.Ticker(stock)
-    print(curr_stock.info())
+    # print(curr_stock.info())
     
     hist = curr_stock.history(period = period) #lookback 1 day
 
