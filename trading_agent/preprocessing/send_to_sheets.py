@@ -127,6 +127,7 @@ def send_to_spreadsheet(stocks):
     counter = rows_filled + 1
     today = date.today()
     
+    
     for stock in stocks:
 
         ticker = [[str(today), stock]]
