@@ -5,3 +5,4 @@ account.json
 venv
 creds.json
 alpaca-api/hist_data/account.json
+trading_agent/buy_power_trade.py

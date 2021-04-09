@@ -13,7 +13,7 @@ endpoint = "https://data.alpaca.markets/v1"
 headers = json.loads(open("account.json", 'r').read())
 
 
-def hist_data(symbols, timeframe="day", limit=1, start="", end="", after="", until=""):
+def hist_data(symbols, timeframe="15Min", limit=1, start="", end="", after="", until=""):
     '''Returns the historical bar data for a group of stocks '''
     df_data = {}
     # Get Requests for Bar Data
