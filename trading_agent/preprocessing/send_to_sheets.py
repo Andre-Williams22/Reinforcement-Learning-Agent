@@ -32,6 +32,8 @@ import pandas as pd
 scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
 
 
+
+
 # then the following should work
 
 # scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]

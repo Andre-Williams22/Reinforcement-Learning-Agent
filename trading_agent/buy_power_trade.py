@@ -19,7 +19,21 @@ from run_DRL import run_model
 import alpaca_trade_api as alpaca
 import ssl
 import json 
+import datetime
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# google sheets stock api 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build 
+from google.auth.transport.requests import Request
+from googleapiclient import discovery
+from google.oauth2.service_account import Credentials
+# Google Sheets Authentication 
+scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 
 account = api.get_account()
 HMAX_NORMALIZE = 100
@@ -68,6 +82,7 @@ def sell_stock(ticker, num_of_shares):
         for position in positions:
             if position.symbol == ticker and abs(int(num_of_shares)) <= int(position.qty):
         ## regular sell order 
+                print('selling stock: ', num_of_shares)
                 api.submit_order(symbol=ticker,qty=round(int(num_of_shares)),side='sell',type='market',time_in_force='day')
     else:
         try: 
@@ -89,14 +104,17 @@ def makeTrades(df, model):
 
     print('mappings: ', mappings)
     
+    print(type(df))
+    print(df)
     # reload env to get current buying power (df, prices,ti, date) for model prediction 
     obs_trade = reset(df)
+
+    print('observation trade: ',obs_trade)
 
     actions, _states = model.predict(obs_trade)
     # obs_trade, rewards, dones, info = step(actions, i, mappings, state, reward)
 
     print('actions: ', actions)
-    
     
     actions = actions * HMAX_NORMALIZE
 
@@ -126,7 +144,7 @@ def makeTrades(df, model):
         cost = round((actions[index]*cprice)-0.5)
         print('cost', cost)
         
-        # print(mappings[index], actions[index])
+        print(mappings[index], actions[index])
         
 
 def reset(df, initial=True, previous_state=[]):
@@ -178,42 +196,42 @@ def reset(df, initial=True, previous_state=[]):
     return state
 
 
+def grabs_daily_volatile_stocks():
+    '''grabs daily most volatile stocks and puts them in a list'''
+    tickers = []
 
+    client = gspread.authorize(creds)
+
+    # Open the spreadhseet and grabs first sheet
+    sheet = client.open("Daily_Volatile_Stocks").sheet1 #worksheet('Sheet1')   
+    # Get a list of all records
+    data = sheet.get_all_records() 
+    # grab specific row 
+    row = sheet.row_values(3)
+    # grab tickers column 
+    stocks = sheet.col_values(2)
+    
+    for ticker in stocks:
+        
+        tickers.append(ticker)
+        
+    return tickers[1:]
+    
+    
 
 if __name__ == "__main__":
     # tickers = get_highest_movers()
     #tickers = ['TSLA', 'CCL', 'ETSY', 'OXY', 'NCLH', 'FLS', 'SIVB', 'V', 'FANG', 'DG', 'MCHP', 'ENPH', 'MRO', 'BBY', 'CB', 'APA', 'DISCK', 'XRX', 'NKE', 'DISCA']
     # tickers = ['TSLA']
+    tickers = grabs_daily_volatile_stocks()
     
-    tickers = ['PVH',
- 'WBA',
- 'VIAC',
- 'DISCA',
- 'KR',
- 'ILMN',
- 'EQIX',
- 'DISCK',
- 'RMD',
- 'RL',
- 'PENN',
- 'ABMD',
- 'ENPH',
- 'LB',
- 'ADSK',
- 'KMB',
- 'ZBRA',
- 'IVZ',
- 'BLK',
- 'UA']
-    
-    print(tickers)
+    # print(tickers)
 
     model = load_model(tickers)
     
     print(model)
     
-    
-    # isOpen = alpaca.get_clock().is_open
+    # isOpen = alpaca.is_open()
     # while(not isOpen):
     #     clock = alpaca.get_clock()
     #     openingTime = clock.next_open.replace(tzinfo=datetime.timezone.utc).timestamp()
@@ -221,14 +239,15 @@ if __name__ == "__main__":
     #     timeToOpen = int((openingTime - currTime) / 60)
     #     print(str(timeToOpen) + " minutes til market open.")
     #     time.sleep(60)
-    #     isOpen = self.alpaca.get_clock().is_open
+    #     isOpen = alpaca.is_open()
 
-    data = preprocess_data(tickers, limit=2)
-    data = data[(data.datadate >= data.datadate.max())]
-    data = data.reset_index()
-    data = data.drop(["index"], axis=1)
-    data = data.fillna(method='ffill')
-    # print(data)
+
+    # data = preprocess_data(tickers, limit=2)
+    # data = data[(data.datadate >= data.datadate.max())]
+    # data = data.reset_index()
+    # data = data.drop(["index"], axis=1)
+    # data = data.fillna(method='ffill')
+    # # print(data)
 
     starttime = time.time()
     timeout = starttime + 60*60*7
@@ -240,9 +259,8 @@ if __name__ == "__main__":
         data = data.drop(["index"], axis=1)
         data = data.fillna(method='ffill')
         makeTrades(data, model)
-        time.sleep(60 - ((time.time() - starttime) % 60))
-         
-
+        time.sleep(900 - ((time.time() - starttime) % 900))
+        
 
 
     # print('buying power', account.buying_power)
