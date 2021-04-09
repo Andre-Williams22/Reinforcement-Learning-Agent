@@ -1,7 +1,7 @@
 import requests
 import json as json
 from datetime import datetime
-import alpaca_trade_api as t
+import alpaca_trade_api as alpaca
 import logging
 import pandas as pd
 import pytz
@@ -10,6 +10,13 @@ import time
 endpoint = "https://data.alpaca.markets/v1"
 
 headers = json.loads(open("account.json", 'r').read())
+
+
+api = alpaca.REST(
+    headers['APCA-API-KEY-ID'],
+    headers['APCA-API-SECRET-KEY'],
+    'https://paper-api.alpaca.markets', api_version='v2'
+)
 
 
 def hist_data(symbol, dataframe, timeframe="day", limit=1000, start="", end="", after="", until=""):

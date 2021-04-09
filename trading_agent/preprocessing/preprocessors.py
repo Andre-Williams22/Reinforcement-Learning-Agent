@@ -5,6 +5,7 @@ from config import config
 
 import random
 from preprocessing.alpaca_api import getData
+import ssl
 
 def load_dataset(tickers, start=None, end=None, limit=1000) -> pd.DataFrame:
     """

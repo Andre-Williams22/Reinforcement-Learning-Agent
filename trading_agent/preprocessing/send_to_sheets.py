@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 import requests
 import json as json
 from datetime import datetime
@@ -8,8 +7,18 @@ import pytz
 import time
 import csv
 
-# import os
-# os.environ["HTTP_PROXY"]="<yourproxy>"
+# google sheets api creds
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build 
+from google.auth.transport.requests import Request
+from googleapiclient import discovery
+
+from datetime import date 
+
+import os 
+import json 
+
 # input : year(date), num of stocks
 # output: list of volatile stocks
 
@@ -19,9 +28,24 @@ import pandas as pd
 # import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 
-requests.get('https://finance.yahoo.com/', verify=False)
+# Google Sheets Authentication 
+scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/spreadsheets',"https://www.googleapis.com/auth/drive.file","https://www.googleapis.com/auth/drive"]
 
-# print(requests.get('https://www.yahoo.com'))
+
+
+
+# then the following should work
+
+# scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
+# creds = ServiceAccountCredentials.from_json_keyfile_dict(create_keyfile_dict(), scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+service = discovery.build('sheets', 'v4', credentials=creds)
+
+# creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+# creds = ServiceAccountCredentials.from_json_keyfile_name(cred_dict, scope)
+client = gspread.authorize(creds)
+
+
 
 def get_stock_symbols():
   sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
@@ -82,6 +106,45 @@ def get_movement_list(stocks, period):
   f.close()
   return curr_stock
 
+
+def send_to_spreadsheet(stocks):
+    '''sends data to google sheet '''
+        
+    spreadsheet_id = ''
+
+    # range_ = 'Sheet2!A1:B1'
+    # sheet2 = client.open("customers_texted").worksheet('Sheet2')
+    value_input_option = "USER_ENTERED"
+    # row = sheet2.row_values()
+    service = build('sheets', 'v4', credentials=creds)
+    sheet = service.spreadsheets()
+
+    client = gspread.authorize(creds)
+    sheet = client.open('Daily_Volatile_Stocks').worksheet('Sheet1')
+
+    data = sheet.get_all_records()
+
+    rows_filled = len(data) + 1 
+
+    counter = rows_filled + 1
+    today = date.today()
+    
+    
+    for stock in stocks:
+
+        ticker = [[str(today), stock]]
+        
+        range_ = f'Sheet1!A{counter}:B{counter}'
+        
+        counter += 1 
+        
+        result = service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=range_, 
+                                                valueInputOption=value_input_option, body={'values':ticker})
+        response = result.execute()
+        # print('{0} cells updated.'.format(response.get('updatedCells')))
+        
+
+
 # time get movement list function #started 6:36, end 6:40
 # stocks = get_stock_symbols()
 # start = time.perf_counter()
@@ -99,6 +162,11 @@ def get_highest_movers():
     sorted_stocks = stocks.sort_values('delta_percent', ascending=False)
     # #take the top 20 values
     most_volatile_stocks = sorted_stocks.head(20)
-    return most_volatile_stocks['stock'].tolist()
+    # sends data to spreadsheet
+    send_to_spreadsheet((most_volatile_stocks['stock'].tolist()))
 
-# print(get_highest_movers())
+
+    return 'Successfully updated spreadsheet with the most volatile stocks'
+
+
+get_highest_movers()

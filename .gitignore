@@ -3,5 +3,5 @@
 .env
 account.json
 venv
-
+creds.json
 alpaca-api/hist_data/account.json

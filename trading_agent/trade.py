@@ -17,9 +17,24 @@ from stable_baselines import A2C
 
 from run_DRL import run_model
 import alpaca_trade_api as alpaca
+import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context
+import json 
 
+# try:
+#     _create_unverified_https_context = ssl._create_unverified_context
+# except AttributeError:
+#     # Legacy Python that doesn't verify HTTPS certificates by default
+#     pass
+# else:
+# # Handle target environment that doesn't support HTTPS verification
+#     ssl._create_default_https_context = _create_unverified_https_context
+    
+    
 headers = json.loads(open("account.json", 'r').read())
 # api = alpaca.REST(headers)
+
+
 api = alpaca.REST(
     headers['APCA-API-KEY-ID'],
     headers['APCA-API-SECRET-KEY'],
@@ -84,14 +99,14 @@ def makeTrades(df, model):
 
     for index in sell_index:
         print('take sell action {}'.format(mappings[index]))
-        # api.submit_order(symbol=mappings[index],qty=abs(int(actions[index])),side='sell',type='market',time_in_force='day')
+        api.submit_order(symbol=mappings[index],qty=abs(int(actions[index])),side='sell',type='market',time_in_force='day')
         # api.submit_order(symbol=mappings[index],notional=20000,side='sell',type='market',time_in_force='day')
         # api.submit_order(symbol=mappings[index],qty=abs(int(account.buying_power*temp_score[index])),side='sell',type='market',time_in_force='day')
         # pass
 
     for index in buy_index:
         print('take buy action: {}'.format(mappings[index]))
-        # api.submit_order(symbol=mappings[index],qty=int(actions[index]),side='buy',type='market',time_in_force='day')
+        api.submit_order(symbol=mappings[index],qty=int(actions[index]),side='buy',type='market',time_in_force='day')
         # api.submit_order(symbol=mappings[index],notional=20000,side='buy',type='market',time_in_force='day')
         # api.submit_order(symbol=mappings[index],qty=abs(int(account.buying_power*temp_score[index])),side='sell',type='market',time_in_force='day')
 
@@ -123,9 +138,3 @@ if __name__ == "__main__":
     print(data)
 
     makeTrades(data, model)
-
-    1,000,043.38
-
-    #3,803,810.34 Buying Power
-
-    #3,803,810.34
